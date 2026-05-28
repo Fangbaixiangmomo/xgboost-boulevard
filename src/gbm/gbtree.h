@@ -146,6 +146,8 @@ struct BoulevardTrainParam : public XGBoostParameter<BoulevardTrainParam> {
         .set_default(1.0f)
         .set_lower_bound(0.0f)
         .describe("Boulevard ensemble learning rate.");
+        // the current parameter setting is only for incomplete boulevard. 
+        // No dropout rate or subsampling rate is set.
   }
 };
 

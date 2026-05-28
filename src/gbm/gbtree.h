@@ -145,7 +145,7 @@ struct BoulevardTrainParam : public XGBoostParameter<BoulevardTrainParam> {
     DMLC_DECLARE_FIELD(boulevard_lambda)
         .set_default(1.0f)
         .set_lower_bound(0.0f)
-        .describe("Boulevard ensemble scaling parameter lambda.");
+        .describe("Boulevard ensemble learning rate.");
   }
 };
 

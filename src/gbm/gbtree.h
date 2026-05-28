@@ -47,11 +47,20 @@ enum class DartSampleType : std::int32_t {
   kUniform = 0,
   kWeighted = 1,
 };
+
+// Boulevard-compatible training methods.
+enum class BoulevardTrainingMethod : std::int32_t {
+  kOff = 0,
+  kBoulevard = 1,
+  kBratD = 2,
+  kBratP = 3,
+};
 }  // namespace xgboost
 
 DECLARE_FIELD_ENUM_CLASS(xgboost::TreeMethod);
 DECLARE_FIELD_ENUM_CLASS(xgboost::TreeProcessType);
 DECLARE_FIELD_ENUM_CLASS(xgboost::DartSampleType);
+DECLARE_FIELD_ENUM_CLASS(xgboost::BoulevardTrainingMethod);
 
 namespace xgboost::gbm {
 /*! \brief training parameters */
@@ -116,6 +125,27 @@ struct DartTrainParam : public XGBoostParameter<DartTrainParam> {
         .set_range(0.0f, 1.0f)
         .set_default(0.0f)
         .describe("Probability of skipping the dropout during a boosting iteration.");
+  }
+};
+
+/** @brief Boulevard-compatible training parameters */
+struct BoulevardTrainParam : public XGBoostParameter<BoulevardTrainParam> {
+  BoulevardTrainingMethod boulevard_training_method;
+  float boulevard_lambda;
+
+  DMLC_DECLARE_PARAMETER(BoulevardTrainParam) {
+    DMLC_DECLARE_FIELD(boulevard_training_method)
+        .set_default(BoulevardTrainingMethod::kOff)
+        .add_enum("off", BoulevardTrainingMethod::kOff)
+        .add_enum("boulevard", BoulevardTrainingMethod::kBoulevard)
+        .add_enum("brat_d", BoulevardTrainingMethod::kBratD)
+        .add_enum("brat_p", BoulevardTrainingMethod::kBratP)
+        .describe("Boulevard-compatible training method.");
+
+    DMLC_DECLARE_FIELD(boulevard_lambda)
+        .set_default(1.0f)
+        .set_lower_bound(0.0f)
+        .describe("Boulevard ensemble scaling parameter lambda.");
   }
 };
 
@@ -348,6 +378,7 @@ class GBTree : public GradientBooster {
   // training parameter
   GBTreeTrainParam tparam_;
   DartTrainParam dparam_{};
+  BoulevardTrainParam bparam_{};
   // Tree training parameter
   tree::TrainParam tree_param_;
   bool specified_updater_{false};

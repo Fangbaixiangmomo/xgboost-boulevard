@@ -86,7 +86,12 @@ bool UpdatersMatched(std::vector<std::string> updater_seq,
 void GBTree::Configure(Args const& cfg) {
   tparam_.UpdateAllowUnknown(cfg);
   dparam_.UpdateAllowUnknown(cfg);
+  bparam_.UpdateAllowUnknown(cfg);
   tree_param_.UpdateAllowUnknown(cfg);
+
+  // Developing note: boulevard training methods are not implemented yet
+  CHECK(bparam_.boulevard_training_method == BoulevardTrainingMethod::kOff)
+      << "Boulevard training methods are not implemented yet.";
 
   model_.Configure(cfg);
 
@@ -412,6 +417,13 @@ void GBTree::LoadConfig(Json const& in) {
     dparam_ = {};
   }
 
+  auto boulevard_it = obj.find("boulevard_train_param");
+  if (boulevard_it != obj.cend()) {
+    FromJson(boulevard_it->second, &bparam_);
+  } else {
+    bparam_ = {};
+  }
+
   // Process type cannot be kUpdate from loaded model
   // This would cause all trees to be pushed to trees_to_update
   // e.g. updating a model, then saving and loading it would result in an empty model
@@ -455,6 +467,7 @@ void GBTree::SaveConfig(Json* p_out) const {
   out["gbtree_train_param"] = ToJson(tparam_);
   out["tree_train_param"] = ToJson(tree_param_);
   out["dart_train_param"] = ToJson(dparam_);
+  out["boulevard_train_param"] = ToJson(bparam_);
 
   // Process type cannot be kUpdate from loaded model
   // This would cause all trees to be pushed to trees_to_update
@@ -609,6 +622,7 @@ void GBTree::Slice(bst_layer_t begin, bst_layer_t end, bst_layer_t step, Gradien
 
   auto p_gbtree = dynamic_cast<GBTree*>(out);
   CHECK(p_gbtree);
+  p_gbtree->bparam_ = this->bparam_;
   GBTreeModel& out_model = p_gbtree->model_;
   CHECK(this->model_.learner_model_param->Initialized());
 
@@ -842,6 +856,7 @@ void GBTree::InplacePredict(std::shared_ptr<DMatrix> p_m, float missing,
 DMLC_REGISTER_PARAMETER(GBTreeModelParam);
 DMLC_REGISTER_PARAMETER(GBTreeTrainParam);
 DMLC_REGISTER_PARAMETER(DartTrainParam);
+DMLC_REGISTER_PARAMETER(BoulevardTrainParam);
 
 XGBOOST_REGISTER_GBM(GBTree, "gbtree")
     .describe("Tree booster, gradient boosted trees.")
